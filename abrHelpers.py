@@ -134,6 +134,7 @@ def abrSearchName(name, option="businessName"):
     query = f"?name={urllib.parse.quote_plus(name)}&postcode=&legalName={legal_name}&tradingName={business_name}&businessName={business_name}&activeABNsOnly=Y{states_query}&authenticationGuid={GUID}&searchWidth=&minimumScore=&maxSearchResults="
     
     response = requests.get(ABR_URL + path + query, timeout=10)
+    print(ABR_URL + path + query)
     response.raise_for_status()
     # print(response.content)
 
@@ -165,8 +166,8 @@ def abrSearchName(name, option="businessName"):
     
 
 # name_result = abrSearchABN(86775834304)
-# name_result = abrSearchABN("97007627198")
-# print(f"Result for Name search: {name_result}")
+name_result = abrSearchName("trustworthy")
+print(f"Result for Name search: {name_result}")
 
 def abrSearchACN(acn):
     return
