@@ -14,9 +14,9 @@ import datetime
 
 # GUID for accessing the web services
 GUID = "d6c41993-5ce1-41cd-a671-a7249e243efb"
-ABR_URL = "https://abr.business.gov.au/abrxmlsearchRPC/AbrXmlSearch.asmx"
+ABR_URL = "https://abr.business.gov.au/"
 ELEM_PREFIX = "{http://abr.business.gov.au/ABRXMLSearchRPC/literalTypes}"
-
+ACN_PREFIX = '{http://abr.business.gov.au/ABRXMLSearch/}'
 ''' 
 Information provided by this path:
 History of business/trading names (trading names are generally obsolete), people tied to this abn, asicNumber, state, Periods of Active/Cancelled, 
@@ -24,7 +24,7 @@ Available on this path but not returned by this function: Public/Private Company
 '''
 def abrSearchABN(abn):
     includeHistoricalDetails = "Y"
-    path = f"/SearchByABNv201205?searchString={abn}&includeHistoricalDetails={includeHistoricalDetails}&authenticationGuid={GUID}"
+    path = f"abrxmlsearchRPC/AbrXmlSearch.asmx/SearchByABNv201205?searchString={abn}&includeHistoricalDetails={includeHistoricalDetails}&authenticationGuid={GUID}"
     outputDict = {}
     # try:
     response = requests.get(ABR_URL + path, timeout=10)
@@ -126,7 +126,7 @@ def abrSearchName(name, option="businessName"):
         abn (string): The Australian Business Number
     """
     
-    path = "/ABRSearchByNameAdvancedSimpleProtocol2017"
+    path = "abrxmlsearchRPC/AbrXmlSearch.asmx/ABRSearchByNameAdvancedSimpleProtocol2017"
 
     business_name = "Y" if option == "businessName" else "N"
     legal_name = "Y" if option == "personName" else "N"
@@ -165,9 +165,24 @@ def abrSearchName(name, option="businessName"):
     return list(abns.items())
     
 
-# name_result = abrSearchABN(86775834304)
-name_result = abrSearchName("trustworthy")
-print(f"Result for Name search: {name_result}")
 
+
+'https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/SearchByASICv201408?searchString=166+205+938&includeHistoricalDetails=Y&authenticationGuid=d6c41993-5ce1-41cd-a671-a7249e243efb'
 def abrSearchACN(acn):
+    path = 'abrxmlsearch/AbrXmlSearch.asmx/SearchByASICv201408'
+    query = f'?searchString={acn}&includeHistoricalDetails=Y&authenticationGuid={GUID}'
+    response = requests.get(ABR_URL + path + query, timeout=10)
+    # print(ABR_URL + path + query)
+    response.raise_for_status()
+    
+
+    data = ET.fromstring(response.content)[1].findall(f"{ACN_PREFIX}businessEntity201408")[0]
+    abnElem = data.find(f"{ACN_PREFIX}ABN")
+
+    for elem in abnElem:
+        print(elem.tag)
+
+
     return
+
+abrSearchACN(166205938)
