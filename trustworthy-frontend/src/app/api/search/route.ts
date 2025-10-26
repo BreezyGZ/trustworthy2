@@ -28,18 +28,27 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform the results to match the expected frontend format
+    console.log("search api")
+    console.log(results[0].tradingNames)
+    console.log(results[0].businessNames)
+    console.log(results[0].businessNames)
     const transformedResults = results.map(result => ({
       abn: result.abn,
       acn: result.acn || "N/A",
-      company_name: result.businessNames.length > 0 
+      companyName: result.businessNames.length > 0 
         ? result.businessNames[0].name 
         : result.tradingNames.length > 0 
           ? result.tradingNames[0].name 
           : "Unknown Company",
-      relevant_people: result.relevantPeople.map((person: any) => person.name),
-      summary: result.statusTimeline.map((status: any) => 
-        `${status.status} (${status.startDate}${status.endDate ? ` - ${status.endDate}` : ' - Present'})`
-      )
+      relevantPeople: result.relevantPeople.map((person: any) => person.name),
+      formerNames: [...result.tradingNames, ...result.businessNames],
+      statusTimeline: result.statusTimeline,
+      summary: [],
+      // formerNames: result.statusTimeline.map((status: any) => 
+      //   `${status.status} (${status.startDate}${status.endDate ? ` - ${status.endDate}` : ' - Present'})`
+      // ),
+      
+
     }));
 
     return NextResponse.json(transformedResults);

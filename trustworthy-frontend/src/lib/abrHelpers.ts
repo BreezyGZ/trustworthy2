@@ -10,18 +10,18 @@ interface NameWithDate {
   endDate: string | null;
 }
 
-interface StatusTimeline {
-  status: string;
-  startDate: string;
-  endDate: string | null;
-}
+// interface StatusTimeline {
+//   status: string;
+//   startDate: string;
+//   endDate: string | null;
+// }
 
 export interface ABRSearchResult {
   abn: string;
   businessNames: NameWithDate[];
   tradingNames: NameWithDate[];
   relevantPeople: NameWithDate[];
-  statusTimeline: StatusTimeline[];
+  statusTimeline: NameWithDate[];
   states: string[];
   acn: string | null;
 }
@@ -160,7 +160,7 @@ function parseEntityStatuses(businessEntity: any, outputDict: ABRSearchResult) {
     const effFrom = status['effectiveFrom'][0];
     const effTo = status['effectiveTo'] ? status['effectiveTo'][0] : null;
 
-    outputDict.statusTimeline.push({ status: statusCode, startDate: effFrom, endDate: effTo });
+    outputDict.statusTimeline.push({ name: statusCode, startDate: effFrom, endDate: effTo });
   }
 }
 
@@ -239,7 +239,7 @@ export async function abrSearchName(name: string, option: string = "businessName
             }
             
             if (score === null) {
-              console.log('Available elements:', Object.keys(result));
+              // console.log('Available elements:', Object.keys(result));
               continue;
             }
             

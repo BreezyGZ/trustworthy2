@@ -88,6 +88,6 @@ export async function query(params: QueryParams): Promise<ABRSearchResult[]> {
     }
   }
 
-  console.log('Query results:', abnDetails);
+  // console.log('Query results:', abnDetails);
   return abnDetails;
 }

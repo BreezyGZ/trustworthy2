@@ -4,25 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BACKEND_URL } from '../../constants/api';
 import Link from 'next/link';
-
-interface SearchResult {
-  abn: string;
-  acn: string;
-  company_name: string;
-  relevant_people: string[];
-  summary: string[];
-}
-
-interface SearchParams {
-  abn?: string;
-  acn?: string;
-  person_name?: string;
-  company_name?: string;
-}
+import { BusinessData, SearchParams } from '../../lib/models';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<BusinessData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,27 +105,34 @@ export default function SearchPage() {
             </div>
           ) : (
             results.map((result, index) => (
-              <Link key={index} href={`/business/${result.abn}`} passHref>
-                <div key={index} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
-                  <div className="font-bold text-xl mb-2">{result.company_name}</div>
+              <Link 
+                key={index} 
+                href={{
+                  pathname: `/business/${result.abn}`,
+                  query: { data: JSON.stringify(result) }, // serialize your object
+                }} 
+                passHref
+              >
+                <div key={index} className=".border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                  <div className="font-bold text-xl mb-2">{result.companyName}</div>
                   <div className="text-gray-600 mb-3">
                     ABN: {result.abn} | ACN: {result.acn}
                   </div>
                   <div className="mb-3">
                     <div className="font-semibold mb-1">Relevant People:</div>
                     <ul className="list-disc list-inside ml-4">
-                      {result.relevant_people.map((person, personIndex) => (
+                      {result.relevantPeople.map((person, personIndex) => (
                         <li key={personIndex}>{person}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Summary:</div>
-                    <div className="ml-4">
+                    {/* <div className="ml-4">
                       {result.summary.map((summaryItem, summaryIndex) => (
                         <div key={summaryIndex} className="mb-1">{summaryItem}</div>
                       ))}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </Link>
