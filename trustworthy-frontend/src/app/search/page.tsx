@@ -1,145 +1,131 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { BACKEND_URL } from '../../constants/api';
-import Link from 'next/link';
-import { BusinessData, SearchParams } from '../../lib/models';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function SearchPage() {
-  const searchParams = useSearchParams();
-  const [results, setResults] = useState<BusinessData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function Home() {
+  const router = useRouter();
+  const [searchParams, setSearchParams] = useState({
+    abn: '',
+    acn: '',
+    person_name: '',
+    company_name: ''
+  });
 
-  // Extract search parameters from URL
-  const searchQuery: SearchParams = {
-    abn: searchParams.get('abn') || undefined,
-    acn: searchParams.get('acn') || undefined,
-    person_name: searchParams.get('person_name') || undefined,
-    company_name: searchParams.get('company_name') || undefined,
+  const handleInputChange = (field: keyof typeof searchParams, value: string) => {
+    setSearchParams(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  // Check if at least one parameter is provided
-  const hasValidParams = Object.values(searchQuery).some(value => value !== undefined);
+  const isSubmitDisabled = Object.values(searchParams).every(value => value.trim() === '');
 
-  // Create search string for display
-  const searchString = `abn:${searchQuery.abn || ''},acn:${searchQuery.acn || ''},person_name:${searchQuery.person_name || ''},company_name:${searchQuery.company_name || ''}`;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSubmitDisabled) return;
 
-  useEffect(() => {
-    if (!hasValidParams) {
-      setError('At least one search parameter must be provided');
-      return;
-    }
-
-    const fetchResults = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Build query string for backend request
-        const queryParams = new URLSearchParams();
-        Object.entries(searchQuery).forEach(([key, value]) => {
-          if (value) {
-            queryParams.append(key, value);
-          }
-        });
-
-        const response = await fetch(`${BACKEND_URL}search?${queryParams.toString()}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setResults(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred while fetching results');
-      } finally {
-        setLoading(false);
+    // Build query string with only non-empty values
+    const queryParams = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value.trim()) {
+        queryParams.append(key, value.trim());
       }
-    };
+    });
 
-    fetchResults();
-  }, [searchParams, hasValidParams]);
-
-  if (!hasValidParams) {
-    return (
-      <div className="min-h-screen p-8">
-        <h1 className="text-3xl font-bold mb-6">Results</h1>
-        <div className="text-red-600">Error: At least one search parameter must be provided</div>
-      </div>
-    );
-  }
+    router.push(`/results?${queryParams.toString()}`);
+  };
 
   return (
-    <div className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-6">Results</h1>
-      
-      <div className="mb-6">
-        <p className="text-gray-600">Search: {searchString}</p>
-      </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+            Business Search
+          </h1>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="abn" className="block text-sm font-medium text-gray-700 mb-2">
+                  ABN
+                </label>
+                <input
+                  type="text"
+                  id="abn"
+                  value={searchParams.abn}
+                  onChange={(e) => handleInputChange('abn', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter ABN"
+                />
+              </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-lg">Loading...</div>
-        </div>
-      )}
+              <div>
+                <label htmlFor="acn" className="block text-sm font-medium text-gray-700 mb-2">
+                  ACN
+                </label>
+                <input
+                  type="text"
+                  id="acn"
+                  value={searchParams.acn}
+                  onChange={(e) => handleInputChange('acn', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter ACN"
+                />
+              </div>
 
-      {error && (
-        <div className="text-red-600 py-4">
-          Error: {error}
-        </div>
-      )}
+              <div>
+                <label htmlFor="person_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Person Search
+                </label>
+                <input
+                  type="text"
+                  id="person_name"
+                  value={searchParams.person_name}
+                  onChange={(e) => handleInputChange('person_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter person name"
+                />
+              </div>
 
-      {!loading && !error && (
-        <div className="flex flex-col gap-4">
-          {results.length === 0 ? (
-            <div className="text-gray-500 py-8 text-center">
-              No results found
+              <div>
+                <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  id="company_name"
+                  value={searchParams.company_name}
+                  onChange={(e) => handleInputChange('company_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter company name"
+                />
+              </div>
             </div>
-          ) : (
-            results.map((result, index) => (
-              <Link 
-                key={index} 
-                href={{
-                  pathname: `/business/${result.abn}`,
-                  query: { data: JSON.stringify(result) }, // serialize your object
-                }} 
-                passHref
+
+            <div className="flex justify-center pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitDisabled}
+                className={`px-8 py-3 rounded-md font-medium text-white transition-colors ${
+                  isSubmitDisabled
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                }`}
               >
-                <div key={index} className=".border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
-                  <div className="font-bold text-xl mb-2">{result.companyName}</div>
-                  <div className="text-gray-600 mb-3">
-                    ABN: {result.abn} | ACN: {result.acn}
-                  </div>
-                  <div className="mb-3">
-                    <div className="font-semibold mb-1">Relevant People:</div>
-                    <ul className="list-disc list-inside ml-4">
-                      {result.relevantPeople.map((person, personIndex) => (
-                        <li key={personIndex}>{person}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="font-semibold mb-1">Summary:</div>
-                    {/* <div className="ml-4">
-                      {result.summary.map((summaryItem, summaryIndex) => (
-                        <div key={summaryIndex} className="mb-1">{summaryItem}</div>
-                      ))}
-                    </div> */}
-                  </div>
-                </div>
-              </Link>
-            ))
-          )}
+                Search
+              </button>
+            </div>
+
+            {isSubmitDisabled && (
+              <p className="text-center text-sm text-gray-500 mt-2">
+                Please fill in at least one search field
+              </p>
+            )}
+          </form>
         </div>
-      )}
+      </div>
     </div>
   );
 }

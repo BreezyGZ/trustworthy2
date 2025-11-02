@@ -41,7 +41,7 @@ function findBestMatches(abn_list: ABRNameSearchResult[]): string[] {
       return bScore - aScore;
     });
 
-  return sorted_abns.slice(0, 20).map(([abn]) => abn);
+  return sorted_abns.slice(0, 5).map(([abn]) => abn);
 }
 
 export async function query(params: QueryParams): Promise<ABRSearchResult[]> {
@@ -63,27 +63,23 @@ export async function query(params: QueryParams): Promise<ABRSearchResult[]> {
 
   const matches: ABRNameSearchResult[] = [];
   
-  // Search by person name
   if (name) {
     const nameResults = await abrSearchName(name, "legalName");
     matches.push(...nameResults);
   }
   
-  // Search by business name
   if (business_name) {
     const businessResults = await abrSearchName(business_name, "businessName");
     matches.push(...businessResults);
   }
 
-  // Find best matches and add to abns list
   const bestMatches = findBestMatches(matches);
   abns.push(...bestMatches);
 
-  // Get details for all ABNs
   const abnDetails: ABRSearchResult[] = [];
   for (const abnToSearch of abns) {
     const details = await abrSearchABN(abnToSearch);
-    if (typeof details !== 'string') { // Only add if not an error string
+    if (typeof details !== 'string') {
       abnDetails.push(details);
     }
   }

@@ -110,6 +110,7 @@ def abrSearchABN(abn):
     outputDict["statusTimeline"] = statusTimeline
     outputDict["states"] = states
     outputDict["acn"] = acn
+    print(outputDict)
     return outputDict
 
     # except:
@@ -185,4 +186,4 @@ def abrSearchACN(acn):
 
     return
 
-abrSearchACN(166205938)
+abrSearchABN(67166242404)

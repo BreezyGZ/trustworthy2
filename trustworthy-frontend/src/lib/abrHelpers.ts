@@ -1,27 +1,16 @@
 import { parseString } from 'xml2js';
+import { TimeRange } from './models';
 
 // GUID for accessing the web services
 const GUID = "d6c41993-5ce1-41cd-a671-a7249e243efb";
 const ABR_URL = "https://abr.business.gov.au/abrxmlsearchRPC/AbrXmlSearch.asmx";
 
-interface NameWithDate {
-  name: string;
-  startDate: string;
-  endDate: string | null;
-}
-
-// interface StatusTimeline {
-//   status: string;
-//   startDate: string;
-//   endDate: string | null;
-// }
-
 export interface ABRSearchResult {
   abn: string;
-  businessNames: NameWithDate[];
-  tradingNames: NameWithDate[];
-  relevantPeople: NameWithDate[];
-  statusTimeline: NameWithDate[];
+  businessNames: TimeRange[];
+  tradingNames: TimeRange[];
+  relevantPeople: TimeRange[];
+  statusTimeline: TimeRange[];
   states: string[];
   acn: string | null;
 }
@@ -122,7 +111,8 @@ function parseTradingNames(businessEntity: any, outputDict: ABRSearchResult) {
   for (const name of tradingNames) {
     const orgName = name['organisationName'][0];
     const effFrom = name['effectiveFrom'][0];
-    const effTo = name['effectiveTo'] ? name['effectiveTo'][0] : null;
+    const effTo = (name['effectiveTo'] && (name['effectiveTo'] !== "0001-01-01"))
+      ? name['effectiveTo'][0] : null;
 
     outputDict.tradingNames.push({ name: orgName, startDate: effFrom, endDate: effTo });
   }
@@ -133,7 +123,8 @@ function parseBusinessNames(businessEntity: any, outputDict: ABRSearchResult) {
   for (const name of businessNames) {
     const orgName = name['organisationName'][0];
     const effFrom = name['effectiveFrom'][0];
-    const effTo = name['effectiveTo'] ? name['effectiveTo'][0] : null;
+    const effTo =(name['effectiveTo'] && (name['effectiveTo'] !== "0001-01-01")) 
+      ? name['effectiveTo'][0] : null;
 
     outputDict.businessNames.push({ name: orgName, startDate: effFrom, endDate: effTo });
   }
@@ -147,7 +138,8 @@ function parseLegalNames(businessEntity: any, outputDict: ABRSearchResult) {
     const familyName = name['familyName'][0];
     const personName = `${givenName}${otherGivenName ? ' ' + otherGivenName : ''} ${familyName}`;
     const effFrom = name['effectiveFrom'][0];
-    const effTo = name['effectiveTo'] ? name['effectiveTo'][0] : null;
+    const effTo = (name['effectiveTo'] && (name['effectiveTo'] !== "0001-01-01")) 
+      ? name['effectiveTo'][0] : null;
 
     outputDict.relevantPeople.push({ name: personName, startDate: effFrom, endDate: effTo });
   }
@@ -158,7 +150,8 @@ function parseEntityStatuses(businessEntity: any, outputDict: ABRSearchResult) {
   for (const status of entityStatuses) {
     const statusCode = status['entityStatusCode'][0];
     const effFrom = status['effectiveFrom'][0];
-    const effTo = status['effectiveTo'] ? status['effectiveTo'][0] : null;
+    const effTo = (status['effectiveTo'] && (status['effectiveTo'][0] !== "0001-01-01"))
+     ? status['effectiveTo'][0] : null;
 
     outputDict.statusTimeline.push({ name: statusCode, startDate: effFrom, endDate: effTo });
   }
@@ -266,9 +259,55 @@ export async function abrSearchName(name: string, option: string = "businessName
   }
 }
 
+// export async function abrSearchACN(acn: string): Promise<string | null> {
+//   // Implementation for ACN search - placeholder for now
+//   // This would need to be implemented based on the ABR API documentation
+//   console.log(`ACN search not implemented yet for: ${acn}`);
+//   return null;
+// }
+
+/**
+ * Looks up the ABN associated with a given ACN.
+ * Returns the ABN string or null if not found or on error.
+ */
 export async function abrSearchACN(acn: string): Promise<string | null> {
-  // Implementation for ACN search - placeholder for now
-  // This would need to be implemented based on the ABR API documentation
-  console.log(`ACN search not implemented yet for: ${acn}`);
-  return null;
+  const path = '/SearchByASICv201408';
+  const query = `?searchString=${acn}&includeHistoricalDetails=N&authenticationGuid=${GUID}`;
+  try {
+    const response = await fetch(ABR_URL + path + query, {
+      method: 'GET',
+      headers: { 'Accept': 'application/xml' },
+    });
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+    const xml = await response.text();
+    // Parse the XML to find the correct ABN element
+    return await new Promise((resolve) => {
+      parseString(xml, (err: any, result: any) => {
+        if (err) {
+          console.error('XML parse error:', err);
+          resolve(null);
+        }
+        try {
+          // Find businessEntity201408 node (2nd child in first response)
+          const entities = result.ABRPayloadSearchResults.response?.[0]?.businessEntity201408;
+          if (entities && entities.length) {
+            const abnElem = entities[0]?.ABN?.[0];
+            const abnVal = abnElem?.identifierValue?.[0];
+            if (abnVal) {
+              resolve(abnVal);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Problem extracting ABN:', e);
+        }
+        resolve(null);
+      });
+    });
+  } catch (e) {
+    console.error(`Error occurred querying 
+      ${ABR_URL + path + query}\n`, e);
+    return null;
+  }
 }
