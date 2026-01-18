@@ -1,4 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Current Issues/Technical Debt
+
+1. Currently the backend is fully operating on the built in Next.js full-stack framework, but in future this app may need more powerful capabilities (especially with user data inside a backend for things like subscriptions). I would like to move this local to a separate API, that way we can sell access to this API as well cleanly
+
+## Features for MVP
+1. The additional aforementioned sources:
+
+ - ACT Government Disciplinary Register (AGDR)
+This source is mostly complete the API route /search has the function ```disciplinaryRegSearch()``` which pipes the data found in the disciplinary register csv for data relating to the acn of the /search acn (currently commented out)
+
+Currently have issues with missing ACNs on many relevant companies but thats a data quality issue with AGDR, also the available csv on the website seems to change its data, so may need some kind of archive system to sporadically download the csv and hold on to old data.
+
+ - ASIC Published Notices (Insolvency)
+ - ACT Government Secure Local Jobs Code Certified Entities
+ - ASIC Banned and Disqualified Individuals (Search within 'Banned and Disqualified' Individuals')
+ - Payment Times Register
+
+
 
 ## Getting Started
 
